@@ -20,7 +20,7 @@ h1, h2 { margin-bottom: 10px; }
   margin-top: 10px;
   padding: 10px 15px;
   border-radius: 8px;
-  background: #007bff; /* Blue buttons */
+  background: #007bff;
   color: #fff;
   font-weight: bold;
   cursor: pointer;
@@ -91,7 +91,6 @@ input, select {
 <p>Points: <span id="points">0</span> | Energy: <span id="energy">50</span></p>
 <div class="btn" id="tapBtn">⚡ Tap to convert 1 Energy → 1 Point</div>
 
-<!-- TAP WHEEL -->
 <div id="wheelContainer">
   <div id="wheel"></div>
   <div class="btn" id="wheelBtn">🎡 Tap Wheel</div>
@@ -152,14 +151,12 @@ function saveState(){
   localStorage.setItem("energy", energy);
 }
 
-/* JOIN */
 function joinChannelClicked(){
   window.open("https://t.me/crytocurrentupdate","_blank");
   document.getElementById("joinPopup").style.display="none";
   document.getElementById("mainPage").style.display="block";
 }
 
-/* Show Ad before Join */
 function showJoinPopupAfterAds(){
   try{
     const rewardAd = window.Adsgram.init({blockId:"21545"});
@@ -171,7 +168,6 @@ function showJoinPopupAfterAds(){
   }
 }
 
-/* REAL TAP SYSTEM */
 document.getElementById("tapBtn").addEventListener("click",()=>{
   if(energy > 0){
     energy -= 1;
@@ -194,24 +190,83 @@ document.getElementById("tapBtn").addEventListener("click",()=>{
   }
 });
 
-/* TAP WHEEL */
+/* TAP WHEEL TASK SYSTEM */
+
 const wheel = document.getElementById("wheel");
 const wheelBtn = document.getElementById("wheelBtn");
 const tapSound = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
 
-wheelBtn.addEventListener("click",()=>{
+let wheelTaskCount = 0;
+
+const taskBlocks = [
+"21546",
+"21547",
+"21548",
+"21549",
+"21550",
+"21551"
+];
+
+function spinWheel(){
   const randomDeg = Math.floor(Math.random()*360)+720;
   wheel.style.transform = `rotate(${randomDeg}deg)`;
   tapSound.play();
-  
-  // reward points randomly between 1-5
-  const earned = Math.floor(Math.random()*5)+1;
-  points += earned;
-  saveState();
-  setTimeout(()=>{ alert(`🎉 You earned ${earned} points!`); }, 3000);
+}
+
+function startWheelTask(){
+
+  spinWheel();
+
+  const randomBlock = taskBlocks[Math.floor(Math.random()*taskBlocks.length)];
+
+  const container = document.getElementById("adsgram-container");
+
+  container.innerHTML = `<adsgram-task data-block-id="${randomBlock}"></adsgram-task>`;
+  container.classList.remove("hidden");
+
+  const task = container.querySelector("adsgram-task");
+
+  task.addEventListener("reward",()=>{
+
+    wheelTaskCount++;
+
+    if(wheelTaskCount < 10){
+
+      setTimeout(()=>{
+        startWheelTask();
+      },2000);
+
+    }else{
+
+      energy += 1000;
+
+      saveState();
+      updateUI();
+
+      alert("🎉 You're successful receive 1000 energy");
+
+      wheelTaskCount = 0;
+
+      container.classList.add("hidden");
+
+    }
+
+  });
+
+}
+
+wheelBtn.addEventListener("click",()=>{
+
+  if(wheelTaskCount === 0){
+
+    startWheelTask();
+
+  }
+
 });
 
 /* WITHDRAW */
+
 document.getElementById("withdrawBtn").addEventListener("click",()=>{
   const method=document.getElementById("method").value;
   const address=document.getElementById("address").value.trim();
@@ -244,65 +299,16 @@ document.getElementById("withdrawBtn").addEventListener("click",()=>{
 });
 
 /* REFERRAL */
+
 const user=webApp.initDataUnsafe.user||{};
 const userId=user.id||"guest";
+
 document.getElementById("refLink").value=`https://t.me/Tapancebot?start=${userId}`;
+
 document.getElementById("copyRefBtn").addEventListener("click",()=>{
   const refInput=document.getElementById("refLink");
   refInput.select();
   document.execCommand("copy");
-});
-
-/* TASK SYSTEM */
-let currentTaskIndex=0;
-const taskIds=["task-21546","task-21547","task-21548","task-21549","task-21550","task-21551"];
-
-function loadTask(blockId){
-  const container=document.getElementById("adsgram-container");
-  container.innerHTML=`<adsgram-task class="task" data-block-id="${blockId}"></adsgram-task>`;
-  container.classList.remove("hidden");
-  document.getElementById("taskIntro").classList.add("hidden");
-
-  const task=container.querySelector(".task");
-  task.addEventListener("reward",(e)=>{
-    energy += 5;
-    saveState();
-    updateUI();
-
-    if(currentTaskIndex<taskIds.length-1){
-      document.getElementById("nextTaskBtnContainer").classList.remove("hidden");
-    }else{
-      document.getElementById("finalTaskBtnContainer").classList.remove("hidden");
-    }
-  });
-}
-
-document.getElementById("startTasksBtn").addEventListener("click",()=>{
-  currentTaskIndex=0;
-  loadTask(taskIds[currentTaskIndex]);
-});
-
-document.getElementById("nextTaskBtn").addEventListener("click",()=>{
-  currentTaskIndex++;
-  document.getElementById("nextTaskBtnContainer").classList.add("hidden");
-  loadTask(taskIds[currentTaskIndex]);
-});
-
-document.getElementById("finalTaskBtn").addEventListener("click",()=>{
-  try{
-    const rewardAd=window.Adsgram.init({blockId:"23578"});
-    rewardAd.show().then(res=>{
-      if(res.done){
-        energy+=5;
-        saveState();
-        updateUI();
-      }
-      document.getElementById("taskIntro").classList.remove("hidden");
-      document.getElementById("adsgram-container").classList.add("hidden");
-      document.getElementById("finalTaskBtnContainer").classList.add("hidden");
-      currentTaskIndex=0;
-    });
-  }catch(e){}
 });
 
 document.addEventListener("DOMContentLoaded",()=>{
