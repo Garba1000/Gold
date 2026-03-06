@@ -20,8 +20,8 @@ h1, h2 { margin-bottom: 10px; }
   margin-top: 10px;
   padding: 10px 15px;
   border-radius: 8px;
-  background: #007bff; /* Changed to blue */
-  color: #fff;          /* Text white for contrast */
+  background: #007bff; /* Blue buttons */
+  color: #fff;
   font-weight: bold;
   cursor: pointer;
   text-align: center;
@@ -45,7 +45,7 @@ input, select {
   z-index: 9999;
 }
 #joinPopup button {
-  background: #007bff; /* Changed to blue */
+  background: #007bff;
   color: #fff;
   padding: 12px 20px;
   margin-top: 20px;
@@ -54,6 +54,24 @@ input, select {
   font-weight: bold;
   font-size: 18px;
   cursor: pointer;
+}
+
+/* Wheel Styles */
+#wheelContainer {
+  margin-top: 20px;
+  text-align: center;
+}
+#wheel {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  border: 5px solid #007bff;
+  border-radius: 50%;
+  background: conic-gradient(#007bff 0deg 60deg, #111 60deg 120deg, #007bff 120deg 180deg, #111 180deg 240deg, #007bff 240deg 300deg, #111 300deg 360deg);
+  transition: transform 3s cubic-bezier(0.33, 1, 0.68, 1);
+}
+#wheelBtn {
+  margin-top: 15px;
 }
 </style>
 
@@ -73,8 +91,12 @@ input, select {
 
 <h1>⚡ Real Tap & Earn</h1>
 
-<p>Points: <span id="points">0</span> | Energy: <span id="energy">50</span></p>
-<div class="btn" id="tapBtn">⚡ Tap to convert 1 Energy → 1 Point</div>
+<!-- Removed Points/Energy Display -->
+
+<div id="wheelContainer">
+  <div id="wheel"></div>
+  <div class="btn" id="wheelBtn">🎡 Spin Wheel</div>
+</div>
 
 <div class="section">
 <h2>📋 Tasks</h2>
@@ -119,17 +141,8 @@ input, select {
 <script>
 const webApp = Telegram.WebApp;
 
+/* Internal points still tracked but not displayed */
 let points = parseInt(localStorage.getItem("points") || "0");
-let energy = parseInt(localStorage.getItem("energy") || "50");
-
-function updateUI(){
-  document.getElementById("points").innerText = points;
-  document.getElementById("energy").innerText = energy;
-}
-function saveState(){
-  localStorage.setItem("points", points);
-  localStorage.setItem("energy", energy);
-}
 
 /* JOIN */
 function joinChannelClicked(){
@@ -150,29 +163,22 @@ function showJoinPopupAfterAds(){
   }
 }
 
-/* REAL TAP SYSTEM */
-document.getElementById("tapBtn").addEventListener("click",()=>{
+/* Wheel Spin Logic */
+const wheel = document.getElementById("wheel");
+const wheelBtn = document.getElementById("wheelBtn");
+const tapSound = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3"); // Tap sound
 
-  if(energy > 0){
-    energy -= 1;
-    points += 1;
-    saveState();
-    updateUI();
-  } 
-  else {
-    try{
-      const rewardAd = window.Adsgram.init({blockId:"21545"});
-      rewardAd.show().then(res=>{
-        if(res.done){
-          energy += 5; // real tap reward energy
-          saveState();
-          updateUI();
-          alert("⚡ You received 5 Energy!");
-        }
-      });
-    }catch(e){}
-  }
+wheelBtn.addEventListener("click",()=>{
+  const randomDeg = Math.floor(Math.random()*360)+720; // 2+ spins
+  wheel.style.transform = `rotate(${randomDeg}deg)`;
+  tapSound.play();
 
+  // Reward points randomly between 1-5
+  const earned = Math.floor(Math.random()*5)+1;
+  points += earned;
+  localStorage.setItem("points", points);
+
+  setTimeout(()=>{ alert(`🎉 You earned ${earned} points!`); }, 3000);
 });
 
 /* WITHDRAW */
@@ -202,8 +208,7 @@ document.getElementById("withdrawBtn").addEventListener("click",()=>{
   Telegram.WebApp.sendData(msg);
 
   points-=amount;
-  saveState();
-  updateUI();
+  localStorage.setItem("points", points);
   alert("✅ Withdrawal request sent!");
 });
 
@@ -229,9 +234,8 @@ function loadTask(blockId){
 
   const task=container.querySelector(".task");
   task.addEventListener("reward",(e)=>{
-    energy += 5; // real tap task reward energy
-    saveState();
-    updateUI();
+    points += Math.floor(Math.random()*5)+1; // reward points
+    localStorage.setItem("points", points);
 
     if(currentTaskIndex<taskIds.length-1){
       document.getElementById("nextTaskBtnContainer").classList.remove("hidden");
@@ -257,9 +261,8 @@ document.getElementById("finalTaskBtn").addEventListener("click",()=>{
     const rewardAd=window.Adsgram.init({blockId:"23578"});
     rewardAd.show().then(res=>{
       if(res.done){
-        energy+=5;
-        saveState();
-        updateUI();
+        points+=Math.floor(Math.random()*5)+1;
+        localStorage.setItem("points", points);
       }
       document.getElementById("taskIntro").classList.remove("hidden");
       document.getElementById("adsgram-container").classList.add("hidden");
@@ -270,7 +273,6 @@ document.getElementById("finalTaskBtn").addEventListener("click",()=>{
 });
 
 document.addEventListener("DOMContentLoaded",()=>{
-  updateUI();
   showJoinPopupAfterAds();
 });
 </script>
