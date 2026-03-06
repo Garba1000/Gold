@@ -13,15 +13,8 @@ body {
   margin: 0;
   padding: 20px;
 }
-
 h1, h2 { margin-bottom: 10px; }
-
-.section {
-  margin-top: 20px;
-  padding: 15px;
-  background: #111;
-  border-radius: 10px;
-}
+.section { margin-top: 20px; padding: 15px; background: #111; border-radius: 10px; }
 
 .btn {
   display: inline-block;
@@ -47,8 +40,8 @@ input, select {
   border: none;
 }
 
-#joinPopup{
-  position:fixed;
+#joinPopup {
+  position: fixed;
   top:0;
   left:0;
   width:100%;
@@ -63,34 +56,33 @@ input, select {
   z-index:9999;
 }
 
-#joinPopup button{
-  background:#007bff;
-  color:#fff;
-  padding:12px 20px;
+#wheelContainer{
   margin-top:20px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
-  font-size:18px;
-  cursor:pointer;
+  text-align:center;
 }
 
-/* success reward message */
+#wheel{
+  width:200px;
+  height:200px;
+  margin:0 auto;
+  border:5px solid #007bff;
+  border-radius:50%;
+  background:conic-gradient(#007bff 0deg 60deg,#111 60deg 120deg,#007bff 120deg 180deg,#111 180deg 240deg,#007bff 240deg 300deg,#111 300deg 360deg);
+  transition:transform 3s cubic-bezier(0.33,1,0.68,1);
+}
 
-#rewardMessage{
+#successBox{
 position:fixed;
-top:25%;
+top:40%;
 left:50%;
-transform:translateX(-50%);
+transform:translate(-50%,-50%);
 background:#007bff;
-padding:20px 30px;
+padding:20px;
 border-radius:10px;
 font-size:18px;
-font-weight:bold;
 display:none;
-z-index:99999;
+z-index:9999;
 }
-
 </style>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -99,13 +91,12 @@ z-index:99999;
 
 <body>
 
-<div id="rewardMessage">
-🎉 You're successful! You received 1000 Energy!
+<div id="successBox">
+🎉 You're successful receive 1000 energy
 </div>
 
 <div id="joinPopup">
 <h2>📢 Join Our Telegram Channel to Continue</h2>
-<p>You must join before using the app.</p>
 <button onclick="joinChannelClicked()">👉 Join @earnzoners</button>
 </div>
 
@@ -113,40 +104,30 @@ z-index:99999;
 
 <h1>⚡ Real Tap & Earn</h1>
 
-<p>Points: <span id="points">0</span></p>
-
-<div class="btn" id="tapBtn">⚡ Tap</div>
+<div id="wheelContainer">
+<div id="wheel"></div>
+<div class="btn" id="wheelBtn">🎡 Spin Wheel</div>
+</div>
 
 <div class="section">
-
 <h2>📋 Tasks</h2>
 
 <div id="adsgram-container" class="hidden"></div>
 
-<div id="nextTaskBtnContainer" class="hidden">
-<div class="btn" id="nextTaskBtn">➡️ Next Task</div>
-</div>
-
 </div>
 
 <div class="section">
-
 <h2>💳 Withdraw</h2>
 
-<p><b>Minimum withdrawal is 50,000 points ($70)</b></p>
-
-<label>Method:</label>
 <select id="method">
 <option value="Litecoin">Litecoin</option>
 <option value="USDT">USDT</option>
 <option value="Payeer">Payeer</option>
-<option value="Bank">Bank Account</option>
+<option value="Bank">Bank</option>
 </select>
 
-<label>Wallet/Account:</label>
-<input type="text" id="address" placeholder="Enter wallet or account"/>
+<input type="text" id="address" placeholder="Enter wallet"/>
 
-<label>Amount:</label>
 <input type="number" id="amount" placeholder="Minimum 50000"/>
 
 <div class="btn" id="withdrawBtn">Request Withdraw</div>
@@ -156,8 +137,6 @@ z-index:99999;
 <div class="section">
 
 <h2>👥 Referral Program</h2>
-
-<p>Your referral link:</p>
 
 <input type="text" id="refLink" readonly/>
 
@@ -169,64 +148,69 @@ z-index:99999;
 
 <script>
 
-const webApp = Telegram.WebApp;
+const webApp=Telegram.WebApp;
 
-/* SAFE BALANCE LOAD (FIX NaN) */
+let points=parseInt(localStorage.getItem("points")||0);
 
-let points=parseInt(localStorage.getItem("points"));
-if(isNaN(points)) points=0;
+let energy=parseInt(localStorage.getItem("energy")||0);
 
-let energy=parseInt(localStorage.getItem("energy"));
-if(isNaN(energy)) energy=50;
-
-let taskCompleted=parseInt(localStorage.getItem("taskCompleted"));
-if(isNaN(taskCompleted)) taskCompleted=0;
-
-/* TASK BLOCK IDs */
-
-const taskIds=[
-"task-21546",
-"task-21547",
-"task-21548",
-"task-21549",
-"task-21550",
-"task-21551"
-];
-
-function updateUI(){
-document.getElementById("points").innerText=points;
-}
-
-function saveState(){
-localStorage.setItem("points",points);
-localStorage.setItem("energy",energy);
-localStorage.setItem("taskCompleted",taskCompleted);
-}
-
-/* JOIN */
+let completedTasks=0;
 
 function joinChannelClicked(){
-window.open("https://t.me/crytocurrentupdate","_blank");
-document.getElementById("joinPopup").style.display="none";
-document.getElementById("mainPage").style.display="block";
-}
 
-/* SHOW AD BEFORE JOIN */
+window.open("https://t.me/crytocurrentupdate","_blank");
+
+document.getElementById("joinPopup").style.display="none";
+
+document.getElementById("mainPage").style.display="block";
+
+}
 
 function showJoinPopupAfterAds(){
+
 try{
+
 const rewardAd=window.Adsgram.init({blockId:"21545"});
+
 rewardAd.show().finally(()=>{
+
 document.getElementById("joinPopup").style.display="flex";
+
 });
+
 }catch(e){
+
 document.getElementById("joinPopup").style.display="flex";
-}
+
 }
 
-/* RANDOM TASK */
+}
 
-function loadRandomTask(){
+const wheel=document.getElementById("wheel");
+
+const wheelBtn=document.getElementById("wheelBtn");
+
+const tapSound=new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
+
+const taskIds=["task-21546","task-21547","task-21548","task-21549","task-21550","task-21551"];
+
+wheelBtn.addEventListener("click",()=>{
+
+const randomDeg=Math.floor(Math.random()*360)+720;
+
+wheel.style.transform=`rotate(${randomDeg}deg)`;
+
+tapSound.play();
+
+setTimeout(()=>{
+
+startRandomTask();
+
+},3000);
+
+});
+
+function startRandomTask(){
 
 const randomTask=taskIds[Math.floor(Math.random()*taskIds.length)];
 
@@ -238,106 +222,70 @@ container.classList.remove("hidden");
 
 const task=container.querySelector(".task");
 
-task.addEventListener("reward",(e)=>{
+task.addEventListener("reward",()=>{
 
-energy+=5;
+points+=Math.floor(Math.random()*5)+1;
 
-taskCompleted++;
+localStorage.setItem("points",points);
 
-saveState();
-updateUI();
+completedTasks++;
 
-if(taskCompleted<10){
-
-document.getElementById("nextTaskBtnContainer").classList.remove("hidden");
-
-}else{
+if(completedTasks>=10){
 
 energy+=1000;
 
-taskCompleted=0;
+localStorage.setItem("energy",energy);
 
-saveState();
+completedTasks=0;
 
-const msg=document.getElementById("rewardMessage");
+showSuccessMessage();
 
-msg.style.display="block";
+}else{
+
+startRandomTask();
+
+}
+
+});
+
+}
+
+function showSuccessMessage(){
+
+const box=document.getElementById("successBox");
+
+box.style.display="block";
 
 setTimeout(()=>{
-msg.style.display="none";
+
+box.style.display="none";
+
 },30000);
 
 }
 
-});
-
-}
-
-/* TAP BUTTON */
-
-document.getElementById("tapBtn").addEventListener("click",()=>{
-
-if(energy>0){
-
-energy--;
-
-points++;
-
-saveState();
-updateUI();
-
-loadRandomTask();
-
-}else{
-
-try{
-
-const rewardAd=window.Adsgram.init({blockId:"21545"});
-
-rewardAd.show().then(res=>{
-
-if(res.done){
-
-energy+=5;
-
-saveState();
-
-}
-
-});
-
-}catch(e){}
-
-}
-
-});
-
-/* NEXT TASK */
-
-document.getElementById("nextTaskBtn").addEventListener("click",()=>{
-
-document.getElementById("nextTaskBtnContainer").classList.add("hidden");
-
-loadRandomTask();
-
-});
-
-/* WITHDRAW */
-
 document.getElementById("withdrawBtn").addEventListener("click",()=>{
 
 const method=document.getElementById("method").value;
-const address=document.getElementById("address").value.trim();
+
+const address=document.getElementById("address").value;
+
 const amount=parseInt(document.getElementById("amount").value);
 
 if(isNaN(amount)||amount<50000){
-alert("Minimum withdrawal is 50,000 points ($70)");
+
+alert("Minimum withdrawal is 50000");
+
 return;
+
 }
 
 if(points<amount){
+
 alert("Not enough points");
+
 return;
+
 }
 
 const user=webApp.initDataUnsafe.user||{};
@@ -345,8 +293,11 @@ const user=webApp.initDataUnsafe.user||{};
 const msg=JSON.stringify({
 
 type:"withdraw_request",
+
 user_id:user.id,
+
 username:user.username||"No username",
+
 amount,method,address
 
 });
@@ -355,16 +306,14 @@ Telegram.WebApp.sendData(msg);
 
 points-=amount;
 
-saveState();
-updateUI();
+localStorage.setItem("points",points);
 
-alert("✅ Withdrawal request sent!");
+alert("Withdrawal request sent");
 
 });
 
-/* REFERRAL */
-
 const user=webApp.initDataUnsafe.user||{};
+
 const userId=user.id||"guest";
 
 document.getElementById("refLink").value=`https://t.me/Tapancebot?start=${userId}`;
@@ -379,11 +328,7 @@ document.execCommand("copy");
 
 });
 
-/* START */
-
 document.addEventListener("DOMContentLoaded",()=>{
-
-updateUI();
 
 showJoinPopupAfterAds();
 
