@@ -83,83 +83,190 @@ input,select{padding:8px;margin:5px 0;width:100%;border-radius:5px;border:none;}
 
 <script>
 const webApp = Telegram.WebApp;
+
+/* FIX FIRST OPEN */
+if(!localStorage.getItem("firstLaunch")){
+localStorage.setItem("points","0");
+localStorage.setItem("energy","50");
+localStorage.setItem("wheelTaskCount","0");
+localStorage.setItem("firstLaunch","yes");
+}
+
 let points = parseInt(localStorage.getItem("points")||"0");
 let energy = parseInt(localStorage.getItem("energy")||"50");
 let wheelTaskCount = parseInt(localStorage.getItem("wheelTaskCount")||"0");
+
 const totalTasks = 10;
 const taskIds = ["task-24541","task-24542","task-24543","task-24544","task-24545","task-24546"];
 
-function updateUI(){document.getElementById("points").innerText=points;document.getElementById("energy").innerText=energy;}
-function saveState(){localStorage.setItem("points",points);localStorage.setItem("energy",energy);}
-function updateProgressBar(){const bar=document.getElementById("taskProgressBar");bar.style.width=((wheelTaskCount/totalTasks)*100)+"%";bar.innerText=`${wheelTaskCount}/${totalTasks}`;}
+function updateUI(){
+document.getElementById("points").innerText=points;
+document.getElementById("energy").innerText=energy;
+}
+
+function saveState(){
+localStorage.setItem("points",points);
+localStorage.setItem("energy",energy);
+}
+
+function updateProgressBar(){
+const bar=document.getElementById("taskProgressBar");
+bar.style.width=((wheelTaskCount/totalTasks)*100)+"%";
+bar.innerText=`${wheelTaskCount}/${totalTasks}`;
+}
 
 /* JOIN */
-function joinChannelClicked(){window.open("https://t.me/crytocurrentupdate","_blank");document.getElementById("joinPopup").style.display="none";document.getElementById("mainPage").style.display="block";}
-function showJoinPopupAfterAds(){try{const rewardAd=window.Adsgram.init({blockId:"24548"});rewardAd.show().finally(()=>{document.getElementById("joinPopup").style.display="flex";});}catch(e){document.getElementById("joinPopup").style.display="flex";}}
+function joinChannelClicked(){
+window.open("https://t.me/crytocurrentupdate","_blank");
+document.getElementById("joinPopup").style.display="none";
+document.getElementById("mainPage").style.display="block";
+}
+
+function showJoinPopupAfterAds(){
+try{
+const rewardAd=window.Adsgram.init({blockId:"24548"});
+rewardAd.show().finally(()=>{
+document.getElementById("joinPopup").style.display="flex";
+});
+}catch(e){
+document.getElementById("joinPopup").style.display="flex";
+}
+}
 
 /* TAP */
 document.getElementById("tapBtn").addEventListener("click",()=>{
-  if(energy>0){energy-=1;points+=1;saveState();updateUI();}
-  else{try{const rewardAd=window.Adsgram.init({blockId:"24547"});rewardAd.show().then(res=>{if(res.done){energy+=5;saveState();updateUI();alert("⚡ You received 5 Energy!");}});}catch(e){}}
+if(energy>0){
+energy-=1;
+points+=1;
+saveState();
+updateUI();
+}else{
+try{
+const rewardAd=window.Adsgram.init({blockId:"24547"});
+rewardAd.show().then(res=>{
+if(res.done){
+energy+=5;
+saveState();
+updateUI();
+alert("⚡ You received 5 Energy!");
+}
+});
+}catch(e){}
+}
 });
 
-/* TAP WHEEL PROPER INTEGRATION */
+/* WHEEL */
 const wheel = document.getElementById("wheel");
 const wheelBtn = document.getElementById("wheelBtn");
 const tapSound = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
 
-function showRewardMessage(){const msg=document.getElementById("rewardMessage");msg.style.display="block";setTimeout(()=>{msg.style.display="none";},30000);}
-function spinWheel(){const randomDeg=Math.floor(Math.random()*360)+720;wheel.style.transform=`rotate(${randomDeg}deg)`;tapSound.play();}
-
-/* START WHEEL TASK */
-function startWheelTask(){
-  spinWheel();
-  const randomBlock = taskIds[Math.floor(Math.random()*taskIds.length)];
-  const container = document.getElementById("adsgram-container");
-  container.innerHTML=`<adsgram-task class="task" data-block-id="${randomBlock}"></adsgram-task>`;
-  container.classList.remove("hidden");
-
-  const task = container.querySelector(".task");
-  task.addEventListener("reward",()=>{
-    wheelTaskCount++;
-    localStorage.setItem("wheelTaskCount",wheelTaskCount);
-    updateProgressBar();
-
-    if(wheelTaskCount<totalTasks){
-      setTimeout(()=>{ startWheelTask(); },2000);
-    }else{
-      energy+=1000;
-      saveState();updateUI();showRewardMessage();
-      wheelTaskCount=0; localStorage.setItem("wheelTaskCount",0);
-      container.classList.add("hidden"); updateProgressBar();
-    }
-  });
+function showRewardMessage(){
+const msg=document.getElementById("rewardMessage");
+msg.style.display="block";
+setTimeout(()=>{msg.style.display="none";},30000);
 }
 
-wheelBtn.addEventListener("click",()=>{if(wheelTaskCount===0){startWheelTask();}});
+function spinWheel(){
+const randomDeg=Math.floor(Math.random()*360)+720;
+wheel.style.transform=`rotate(${randomDeg}deg)`;
+tapSound.play();
+}
+
+function startWheelTask(){
+
+if(wheelTaskCount>=totalTasks){
+energy+=1000;
+saveState();
+updateUI();
+showRewardMessage();
+
+wheelTaskCount=0;
+localStorage.setItem("wheelTaskCount",0);
+updateProgressBar();
+return;
+}
+
+spinWheel();
+
+const randomBlock = taskIds[Math.floor(Math.random()*taskIds.length)];
+
+const container=document.getElementById("adsgram-container");
+
+container.innerHTML=`<adsgram-task class="task" data-block-id="${randomBlock}"></adsgram-task>`;
+container.classList.remove("hidden");
+
+const task = container.querySelector(".task");
+
+task.addEventListener("reward",()=>{
+
+wheelTaskCount++;
+localStorage.setItem("wheelTaskCount",wheelTaskCount);
+
+updateProgressBar();
+
+setTimeout(()=>{
+startWheelTask();
+},2000);
+
+});
+}
+
+wheelBtn.addEventListener("click",()=>{
+startWheelTask();
+});
 
 /* WITHDRAW */
 document.getElementById("withdrawBtn").addEventListener("click",()=>{
-  const method=document.getElementById("method").value;
-  const address=document.getElementById("address").value.trim();
-  const amount=parseInt(document.getElementById("amount").value);
-  if(isNaN(amount)||amount<50000){alert("Minimum withdrawal is 50,000 points ($70)");return;}
-  if(points<amount){alert("Not enough points");return;}
-  const user=webApp.initDataUnsafe.user||{};
-  const msg=JSON.stringify({type:"withdraw_request",user_id:user.id,username:user.username||"No username",amount,method,address});
-  Telegram.WebApp.sendData(msg);
-  points-=amount; saveState(); updateUI();
-  alert("✅ Withdrawal request sent!");
+const method=document.getElementById("method").value;
+const address=document.getElementById("address").value.trim();
+const amount=parseInt(document.getElementById("amount").value);
+
+if(isNaN(amount)||amount<50000){
+alert("Minimum withdrawal is 50,000 points ($70)");
+return;
+}
+
+if(points<amount){
+alert("Not enough points");
+return;
+}
+
+const user=webApp.initDataUnsafe.user||{};
+
+const msg=JSON.stringify({
+type:"withdraw_request",
+user_id:user.id,
+username:user.username||"No username",
+amount,
+method,
+address
+});
+
+Telegram.WebApp.sendData(msg);
+
+points-=amount;
+saveState();
+updateUI();
+
+alert("✅ Withdrawal request sent!");
 });
 
 /* REFERRAL */
 const user=webApp.initDataUnsafe.user||{};
 const userId=user.id||"guest";
+
 document.getElementById("refLink").value=`https://t.me/Tapancebot?start=${userId}`;
-document.getElementById("copyRefBtn").addEventListener("click",()=>{const refInput=document.getElementById("refLink");refInput.select();document.execCommand("copy");});
+
+document.getElementById("copyRefBtn").addEventListener("click",()=>{
+const refInput=document.getElementById("refLink");
+refInput.select();
+document.execCommand("copy");
+});
 
 document.addEventListener("DOMContentLoaded",()=>{
-  updateUI(); showJoinPopupAfterAds(); updateProgressBar();
+updateUI();
+showJoinPopupAfterAds();
+updateProgressBar();
 });
 </script>
 </body>
