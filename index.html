@@ -87,7 +87,7 @@ let points = parseInt(localStorage.getItem("points")||"0");
 let energy = parseInt(localStorage.getItem("energy")||"50");
 let wheelTaskCount = parseInt(localStorage.getItem("wheelTaskCount")||"0");
 const totalTasks = 10;
-const taskIds = ["task-21546","task-21547","task-21548","task-21549","task-21550","task-21551"];
+const taskIds = ["task-24541","task-24542","task-24543","task-24544","task-24545","task-24546"];
 
 function updateUI(){document.getElementById("points").innerText=points;document.getElementById("energy").innerText=energy;}
 function saveState(){localStorage.setItem("points",points);localStorage.setItem("energy",energy);}
@@ -95,12 +95,12 @@ function updateProgressBar(){const bar=document.getElementById("taskProgressBar"
 
 /* JOIN */
 function joinChannelClicked(){window.open("https://t.me/crytocurrentupdate","_blank");document.getElementById("joinPopup").style.display="none";document.getElementById("mainPage").style.display="block";}
-function showJoinPopupAfterAds(){try{const rewardAd=window.Adsgram.init({blockId:"21545"});rewardAd.show().finally(()=>{document.getElementById("joinPopup").style.display="flex";});}catch(e){document.getElementById("joinPopup").style.display="flex";}}
+function showJoinPopupAfterAds(){try{const rewardAd=window.Adsgram.init({blockId:"24548"});rewardAd.show().finally(()=>{document.getElementById("joinPopup").style.display="flex";});}catch(e){document.getElementById("joinPopup").style.display="flex";}}
 
 /* TAP */
 document.getElementById("tapBtn").addEventListener("click",()=>{
   if(energy>0){energy-=1;points+=1;saveState();updateUI();}
-  else{try{const rewardAd=window.Adsgram.init({blockId:"21545"});rewardAd.show().then(res=>{if(res.done){energy+=5;saveState();updateUI();alert("⚡ You received 5 Energy!");}});}catch(e){}}
+  else{try{const rewardAd=window.Adsgram.init({blockId:"24547"});rewardAd.show().then(res=>{if(res.done){energy+=5;saveState();updateUI();alert("⚡ You received 5 Energy!");}});}catch(e){}}
 });
 
 /* TAP WHEEL PROPER INTEGRATION */
